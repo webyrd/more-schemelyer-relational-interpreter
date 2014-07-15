@@ -245,6 +245,33 @@
 ;;              q))
 ;;   '(a b c d e))
 
+;; if-versions of append
+
+#|
+(test "if-append-1"
+  (run* (q)
+    (evalo '(letrec ([append
+                      (lambda (l s)
+                        (if (null? l)
+                            s
+                            (cons (car l) (append (cdr l) s))))])
+              (append '(a b c) '(d e)))
+           q))
+  '(a b c d e))
+
+(test "if-append-2"
+  (run* (q) (evalo
+             '((letrec ([append
+                         (lambda (l s)
+                           (if (null? l)
+                               s
+                               (cons (car l) (append (cdr l) s))))])
+                 append)
+               '(a b c) '(d e))
+             q))
+  '(a b c d e))
+|#
+
 ;; ugly factorial
 (define rel-fact5
   `((lambda (f)
