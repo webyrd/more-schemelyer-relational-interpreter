@@ -79,6 +79,7 @@
       ((number-primo exp env val))
       ((sub1-primo exp env val))
       ((zero?-primo exp env val))
+      ((null?-primo exp env val))
       ((*-primo exp env val))    
       ((cons-primo exp env val))
       ((car-primo exp env val))
@@ -156,6 +157,16 @@
         ((poso n) (== #f val)))
       (not-in-envo 'zero? env)
       (eval-expo e env `(int-val ,n)))))
+
+(define null?-primo
+  (lambda (exp env val)
+    (fresh (e v)
+      (== `(null? ,e) exp)
+      (conde
+        ((== '() v) (== #t val))
+        ((=/= '() v) (== #f val)))
+      (not-in-envo 'null? env)
+      (eval-expo e env v))))
 
 (define *-primo
   (lambda (exp env val)
