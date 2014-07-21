@@ -53,14 +53,14 @@
       ((symbolo exp) (lookupo exp env val))
       ((fresh (rator x* rands body env^ a* res)
          (== `(,rator . ,rands) exp)
-         (eval-expo rator env `(closure ,x* ,body ,env^))
+         (eval-expo rator env `(closure (lambda ,x* ,body) ,env^))
          (proper-listo rands env a*)
          (ext-env*o x* a* env^ res)
          (eval-expo body res val)))
       ((fresh (x* body)
          (== `(lambda ,x* ,body) exp)
          (not-in-envo 'lambda env)
-         (== `(closure ,x* ,body ,env) val))))))
+         (== `(closure (lambda ,x* ,body) ,env) val))))))
 
 (define ext-env*o
   (lambda (x* a* env out)
