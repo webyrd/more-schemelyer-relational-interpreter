@@ -8,7 +8,44 @@
        (== `(ext-env ,y ,v ,rest) env)
        (conde
          ((== y x) (== v t))
-         ((=/= y x) (lookupo x rest t))))))))
+         ((=/= y x) (lookupo x rest t)))))
+      ((fresh (defs rest)
+         (== `(ext-rec ,defs ,rest) env)
+         (lookup-ext-reco x defs env rest t))))))
+
+(define lookup-ext-reco
+  (lambda (x defs env rest t)
+    (fresh (y lam-exp others)
+      (conde
+        ((== '() defs) (lookupo x rest t))
+        ((== `((,y ,lam-exp) . ,others) defs)
+         (conde
+           ((== y x) (== `(closure ,lam-exp ,env) t))
+           ((=/= y x) (lookup-ext-reco x others env rest t))))))))
+
+#|
+(define lookupo
+  (lambda (x env t)
+    (conde
+      ((fresh (y v rest)
+       (== `(ext-env ,y ,v ,rest) env)
+       (conde
+         ((== y x) (== v t))
+         ((=/= y x) (lookupo x rest t)))))
+      ((fresh (defs rest)
+         (== `(ext-rec ,defs ,rest) env)
+         (conde
+           ((lookup-ext-reco x defs env t))
+           ((not-in-defso x defs) (lookupo x rest t))))))))
+
+(define lookup-ext-reco
+  (lambda (x defs env t)
+    (fresh (y lam-exp others)
+      (== `((,y ,lam-exp) . ,others) defs)
+      (conde
+        ((== y x) (== `(closure ,lam-exp ,env) t))
+        ((=/= y x) (lookup-ext-reco x others env t))))))
+|#
 
 (define not-in-envo
   (lambda (x env)
@@ -17,7 +54,20 @@
       ((fresh (y v rest)
          (== `(ext-env ,y ,v ,rest) env)
          (=/= y x)
+         (not-in-envo x rest)))
+      ((fresh (defs rest)
+         (== `(ext-rec ,defs ,rest) env)
+         (not-in-defso x defs)
          (not-in-envo x rest))))))
+
+(define not-in-defso
+  (lambda (x defs)
+    (conde
+      ((== '() defs))
+      ((fresh (y lam-exp others)
+         (== `((,y ,lam-exp) . ,others) defs)
+         (=/= y x)
+         (not-in-defso x others))))))
 
 (define proper-listo
   (lambda (exp env val)
@@ -38,12 +88,17 @@
 (define eval-expo
   (lambda (exp env val)
     (conde
+      ((symbolo exp) (lookupo exp env val))
       ((fresh (v)
          (== `(quote ,v) exp)
+         (== v val)
          (not-in-envo 'quote env)
          (absento 'closure v)
-         (absento 'int-val v)
-         (== v val)))      
+         (absento 'int-val v)))
+      ((fresh (x* body)
+         (== `(lambda ,x* ,body) exp)
+         (== `(closure (lambda ,x* ,body) ,env) val)
+         (not-in-envo 'lambda env)))
       ((fresh (a*)
          (== `(list . ,a*) exp)
          (not-in-envo 'list env)
@@ -51,17 +106,25 @@
          (absento 'int-val a*)
          (proper-listo a* env val)))
       ((prim-expo exp env val))
-      ((symbolo exp) (lookupo exp env val))
+
       ((fresh (rator x* rands body env^ a* res)
          (== `(,rator . ,rands) exp)
          (eval-expo rator env `(closure (lambda ,x* ,body) ,env^))
          (proper-listo rands env a*)
          (ext-env*o x* a* env^ res)
          (eval-expo body res val)))
-      ((fresh (x* body)
-         (== `(lambda ,x* ,body) exp)
-         (not-in-envo 'lambda env)
-         (== `(closure (lambda ,x* ,body) ,env) val))))))
+
+      
+      ((fresh (p-name x other-xs body others letrec-body)
+         (== `(letrec ((,p-name (lambda (,x . ,other-xs) ,body)) . ,others)
+                ,letrec-body)
+             exp)
+         (not-in-envo 'letrec env)
+         (eval-expo letrec-body
+                    `(ext-rec ((,p-name (lambda (,x . ,other-xs) ,body)) . ,others) ,env)
+                    val)))
+
+      )))
 
 (define ext-env*o
   (lambda (x* a* env out)
@@ -77,11 +140,11 @@
   (lambda (exp env val)
     (conde
       ((boolean-primo exp env val))
-      ((number-primo exp env val))
-      ((sub1-primo exp env val))
-      ((zero?-primo exp env val))
+;      ((number-primo exp env val))
+;      ((sub1-primo exp env val))
+;      ((zero?-primo exp env val))
       ((null?-primo exp env val))
-      ((*-primo exp env val))    
+;      ((*-primo exp env val))    
       ((cons-primo exp env val))
       ((car-primo exp env val))
       ((cdr-primo exp env val))

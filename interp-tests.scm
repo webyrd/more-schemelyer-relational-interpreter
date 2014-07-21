@@ -6,8 +6,6 @@
 ;; add factorial test
 ;;
 ;; add unit tests for cons, cdr, letrec, cond, etc
-;;
-;; add twines and thrines
 
 
 (test "pluso-1"
@@ -177,14 +175,86 @@
 ;;                        q))
 ;;   '(true))
 
+(test "append-1"
+  (run* (q)
+    (evalo
+     '(letrec ((append
+                (lambda (l s)
+                  (if (null? l)
+                      s
+                      (cons (car l) (append (cdr l) s))))))
+        (append '(a b c) '(d e)))
+     q))
+  '((a b c d e)))
+
+(test "append-2"
+  (run 3 (q)
+    (evalo
+     `(letrec ((append
+                (lambda (l s)
+                  (if (null? l)
+                      s
+                      (cons (car l) (append (cdr l) s))))))
+        (append '(a b c) ,q))
+     '(a b c d e)))
+  '('(d e)
+    (list 'd 'e)
+    ((letrec ((_.0 (lambda (_.1 . _.2) _.3))) '(d e))
+     (=/= ((_.0 quote))))))
+
+(test "append-3"
+  (run* (q)
+    (evalo
+     `(letrec ((append
+                (lambda (l s)
+                  (if (null? l)
+                      s
+                      (cons (car l) (append (cdr l) s))))))
+        (append '(a b c) (quote ,q)))
+     '(a b c d e)))
+  '((d e)))
+
+(test "append-4"
+  (run* (q)
+    (evalo
+     `(letrec ((append
+                (lambda (l s)
+                  (if (null? l)
+                      s
+                      (cons (car l) (append (cdr l) s))))))
+        (append (quote ,q) '(d e)))
+     '(a b c d e)))
+  '((a b c)))
+
+(test "append-5"
+  (run* (q)
+    (fresh (l s)
+      (== (list l s) q)
+      (evalo
+       `(letrec ((append (lambda (l s)
+                           (if (null? l)
+                               s
+                               (cons (car l) (append (cdr l) s))))))
+          (append (quote ,l) (quote ,s)))
+       '(a b c d e))))
+  '((() (a b c d e))
+    ((a) (b c d e))
+    ((a b) (c d e))
+    ((a b c) (d e))
+    ((a b c d) (e))
+    ((a b c d e) ())))
+
 
 (test "quines-1"
   (run 5 (q) (evalo q q))
   '(#t
     #f
     (((lambda (_.0) (list _.0 (list 'quote _.0))) '(lambda (_.0) (list _.0 (list 'quote _.0)))) (=/= ((_.0 closure)) ((_.0 int-val)) ((_.0 list)) ((_.0 quote))) (sym _.0))
-    (((lambda (_.0) (list _.0 (list (car '(quote . _.1)) _.0))) '(lambda (_.0) (list _.0 (list (car '(quote . _.1)) _.0)))) (=/= ((_.0 car)) ((_.0 closure)) ((_.0 int-val)) ((_.0 list)) ((_.0 quote))) (sym _.0) (absento (closure _.1) (int-val _.1)))
-    (((lambda (_.0) (list (list 'lambda '(_.0) _.0) (list 'quote _.0))) '(list (list 'lambda '(_.0) _.0) (list 'quote _.0))) (=/= ((_.0 closure)) ((_.0 int-val)) ((_.0 list)) ((_.0 quote))) (sym _.0))))
+    (((lambda (_.0) (list (car _.0) (list 'quote _.0))) '((lambda (_.0) (list (car _.0) (list 'quote _.0))) . _.1)) (=/= ((_.0 car)) ((_.0 closure)) ((_.0 int-val)) ((_.0 list)) ((_.0 quote))) (sym _.0) (absento (closure _.1) (int-val _.1)))
+    (((lambda (_.0) (list _.0 (list (car '(quote . _.1)) _.0))) '(lambda (_.0) (list _.0 (list (car '(quote . _.1)) _.0)))) (=/= ((_.0 car)) ((_.0 closure)) ((_.0 int-val)) ((_.0 list)) ((_.0 quote))) (sym _.0) (absento (closure _.1) (int-val _.1)))))
+
+
+#!eof
 
 (test "twines-1"
   (run 1 (out)
@@ -295,14 +365,19 @@
 (test "appA-1"
   (run 12 (q) (evalo q `(int-val ,(build-num 6))))
   '((int-exp (0 1 1))
-    ((lambda () (int-exp (0 1 1))))
     (sub1 (int-exp (1 1 1)))
-    (((lambda (_.0) (int-exp (0 1 1))) '_.1) (=/= ((_.0 int-exp))) (absento (closure _.1) (int-val _.1)))
+    ((lambda () (int-exp (0 1 1))))
+    (((lambda (_.0) (int-exp (0 1 1))) '_.1)
+     (=/= ((_.0 int-exp)))
+     (absento (closure _.1) (int-val _.1)))
     (* (int-exp (1)) (int-exp (0 1 1)))
     (* (int-exp (0 1 1)) (int-exp (1)))
     (* (int-exp (0 1)) (int-exp (1 1)))
-    (((lambda (_.0) (int-exp (0 1 1))) (list)) (=/= ((_.0 int-exp))))
     (car (list (int-exp (0 1 1))))
-    ((lambda () ((lambda () (int-exp (0 1 1))))))
+    (((lambda (_.0 _.1) (int-exp (0 1 1))) '_.2 '_.3)
+     (=/= ((_.0 int-exp)) ((_.1 int-exp)))
+     (absento (closure _.2) (closure _.3) (int-val _.2)
+              (int-val _.3)))
     ((lambda () (sub1 (int-exp (1 1 1)))))
-    (sub1 ((lambda () (int-exp (1 1 1))))))) 
+    (* (int-exp (1 1)) (int-exp (0 1)))
+    ((lambda () ((lambda () (int-exp (0 1 1)))))))) 
