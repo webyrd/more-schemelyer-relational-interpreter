@@ -3,18 +3,19 @@
 
 (define lookupo
   (lambda (x env t)
-    (fresh (y v rest)
-      (== `((,y . ,v) . ,rest) env)
-      (conde
-        ((== y x) (== v t))
-        ((=/= y x) (lookupo x rest t))))))
+    (conde
+      ((fresh (y v rest)
+       (== `(ext-env ,y ,v ,rest) env)
+       (conde
+         ((== y x) (== v t))
+         ((=/= y x) (lookupo x rest t))))))))
 
 (define not-in-envo
   (lambda (x env)
     (conde
       ((== '() env))
       ((fresh (y v rest)
-         (== `((,y . ,v) . ,rest) env)
+         (== `(ext-env ,y ,v ,rest) env)
          (=/= y x)
          (not-in-envo x rest))))))
 
@@ -69,7 +70,7 @@
       ((fresh (x a dx* da* env2)
          (== `(,x . ,dx*) x*)
          (== `(,a . ,da*) a*)
-         (== `((,x . ,a) . ,env) env2)
+         (== `(ext-env ,x ,a ,env) env2)
          (ext-env*o dx* da* env2 out))))))
 
 (define prim-expo
