@@ -1,6 +1,9 @@
 (load "mk.scm")
 (load "numbers.scm")
 
+;; letrec is based on Dan Friedman's code, using the "half-closure"
+;; approach from Reynold's definitional interpreters
+
 (define lookupo
   (lambda (x env t)
     (conde
@@ -22,30 +25,6 @@
          (conde
            ((== y x) (== `(closure ,lam-exp ,env) t))
            ((=/= y x) (lookup-ext-reco x others env rest t))))))))
-
-#|
-(define lookupo
-  (lambda (x env t)
-    (conde
-      ((fresh (y v rest)
-       (== `(ext-env ,y ,v ,rest) env)
-       (conde
-         ((== y x) (== v t))
-         ((=/= y x) (lookupo x rest t)))))
-      ((fresh (defs rest)
-         (== `(ext-rec ,defs ,rest) env)
-         (conde
-           ((lookup-ext-reco x defs env t))
-           ((not-in-defso x defs) (lookupo x rest t))))))))
-
-(define lookup-ext-reco
-  (lambda (x defs env t)
-    (fresh (y lam-exp others)
-      (== `((,y ,lam-exp) . ,others) defs)
-      (conde
-        ((== y x) (== `(closure ,lam-exp ,env) t))
-        ((=/= y x) (lookup-ext-reco x others env t))))))
-|#
 
 (define not-in-envo
   (lambda (x env)
