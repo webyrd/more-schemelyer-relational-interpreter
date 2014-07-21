@@ -244,6 +244,65 @@
     ((a b c d) (e))
     ((a b c d e) ())))
 
+(test "append-6a"
+  (run 1 (append-body)
+    (fresh (?)
+      (eigen (a b c d e)
+        (== `(lambda (l s)
+               (if (null? l)
+                   s
+                   (cons (car l) (append (cdr l) s))))
+            append-body)
+        (evalo
+         `(letrec ((append ,append-body))
+            (append (quote (,a ,b ,c)) (quote (,d ,e))))
+         (list a b c d e)))))
+  '((lambda (l s)
+      (if (null? l) s (cons (car l) (append (cdr l) s))))))
+
+(test "append-6b"
+  (run 1 (append-body)
+    (fresh (?)
+      (eigen (a b c d e)
+        (== `(lambda (l s)
+               (if (null? l)
+                   s
+                   (cons (car l) (append ,? s))))
+            append-body)
+        (evalo
+         `(letrec ((append ,append-body))
+            (append (quote (,a ,b ,c)) (quote (,d ,e))))
+         (list a b c d e)))))
+  '((lambda (l s)
+      (if (null? l) s (cons (car l) (append (cdr l) s))))))
+
+;; this failing test shows why we should ideally find the smallest
+;; program that satisfies the example, rather than letting miniKanre
+;; do the least amount of work to find a solution.
+(test "append-6c"
+  (run 1 (append-body)
+    (fresh (?)
+      (eigen (a b c d e)
+        (== `(lambda (l s)
+               (if (null? l)
+                   s
+                   (cons (car l) ,?)))
+            append-body)
+        (evalo
+         `(letrec ((append ,append-body))
+            (append (quote (,a ,b)) (quote (,c))))
+         (list a b c)))))
+  '((lambda (l s)
+      (if (null? l)
+          s
+          (cons (car l) (append (cdr l) s))))))
+;; miniKanren generates this overly-specific answer:
+;;
+;; ((lambda (l s)
+;;    (if (null? l)
+;;        s
+;;        (cons (car l) (list (car (cdr l)) (car s))))))
+
 
 (test "quines-1"
   (run 5 (q) (evalo q q))
