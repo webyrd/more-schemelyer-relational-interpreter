@@ -34,6 +34,15 @@
     ((0 0 1 1) (0 1) (0 0 0 1 1))))
 
 
+(test "quines-1"
+  (run 5 (q) (evalo q q))
+  '(#t
+    #f
+    (((lambda (_.0) (list _.0 (list 'quote _.0))) '(lambda (_.0) (list _.0 (list 'quote _.0)))) (=/= ((_.0 closure)) ((_.0 int-val)) ((_.0 list)) ((_.0 quote))) (sym _.0))
+    (((lambda (_.0) (list (car _.0) (list 'quote _.0))) '((lambda (_.0) (list (car _.0) (list 'quote _.0))) . _.1)) (=/= ((_.0 car)) ((_.0 closure)) ((_.0 int-val)) ((_.0 list)) ((_.0 quote))) (sym _.0) (absento (closure _.1) (int-val _.1)))
+    (((lambda (_.0) (list _.0 (list (car '(quote . _.1)) _.0))) '(lambda (_.0) (list _.0 (list (car '(quote . _.1)) _.0)))) (=/= ((_.0 car)) ((_.0 closure)) ((_.0 int-val)) ((_.0 list)) ((_.0 quote))) (sym _.0) (absento (closure _.1) (int-val _.1)))))
+
+
 
 ;; (test "1"
 ;;   (run* (q) (eval-expo '#f '() q))
@@ -244,7 +253,98 @@
     ((a b c d) (e))
     ((a b c d e) ())))
 
-(test "append-6a"
+(test "append-6"
+  (run 6 (q)
+    (fresh (x y z)
+      (== (list x y z) q)
+      (evalo
+       `(letrec ((append (lambda (l s)
+                           (if (null? l)
+                               s
+                               (cons (car l) (append (cdr l) s))))))
+          (append (quote ,x) (quote ,y)))
+       `(a b c . ,z))))
+  '(((() (a b c . _.0) _.0)
+     (absento (closure _.0) (int-val _.0)))
+    (((a) (b c . _.0) _.0)
+     (absento (closure _.0) (int-val _.0)))
+    (((a b) (c . _.0) _.0)
+     (absento (closure _.0) (int-val _.0)))
+    (((a b c) _.0 _.0)
+     (absento (closure _.0) (int-val _.0)))
+    (((a b c _.0) _.1 (_.0 . _.1))
+     (absento (closure _.0) (closure _.1)
+              (int-val _.0) (int-val _.1)))
+    (((a b c _.0 _.1) _.2 (_.0 _.1 . _.2))
+     (absento (closure _.0) (closure _.1) (closure _.2)
+              (int-val _.0) (int-val _.1) (int-val _.2)))))
+
+(test "append-7"
+  (run 6 (q)
+    (fresh (x y z)
+      (== (list x y z) q)
+      (evalo
+       `(letrec ((append (lambda (l s)
+                           (if (null? l)
+                               s
+                               (cons (car l) (append (cdr l) s))))))
+          (append (quote (a . ,x)) (quote ,y)))
+       `(a b c . ,z))))
+  '(((() (b c . _.0) _.0)
+     (absento (closure _.0) (int-val _.0)))
+    (((b) (c . _.0) _.0)
+     (absento (closure _.0) (int-val _.0)))
+    (((b c) _.0 _.0)
+     (absento (closure _.0) (int-val _.0)))
+    (((b c _.0) _.1 (_.0 . _.1))
+     (absento (closure _.0) (closure _.1) (int-val _.0)
+              (int-val _.1)))
+    (((b c _.0 _.1) _.2 (_.0 _.1 . _.2))
+     (absento (closure _.0) (closure _.1) (closure _.2)
+              (int-val _.0) (int-val _.1) (int-val _.2)))
+    (((b c _.0 _.1 _.2) _.3 (_.0 _.1 _.2 . _.3))
+     (absento (closure _.0) (closure _.1) (closure _.2)
+              (closure _.3) (int-val _.0) (int-val _.1)
+              (int-val _.2) (int-val _.3)))))
+
+(test "append-8"
+  (run* (q)
+    (fresh (x y z)
+      (== (list x y z) q)
+      (evalo
+       `(letrec ((append (lambda (l s)
+                           (if (null? l)
+                               s
+                               (cons (car l) (append (cdr l) s))))))
+          (append (quote (e . ,x)) (quote ,y)))
+       `(a b c . ,z))))
+  '())
+
+(test "append-9"
+  (run 4 (q)
+    (fresh (x y z)
+      (== (list x y z) q)
+      (evalo
+       `(letrec ((append (lambda (l s)
+                           (if (null? l)
+                               s
+                               (cons (car l) (append (cdr l) s))))))
+          (append (quote ,x) (quote (c . ,y))))
+       `(a b c . ,z))))
+  '((((a b) _.0 _.0)
+     (absento (closure _.0) (int-val _.0)))
+    (((a b c) _.0 (c . _.0))
+     (absento (closure _.0) (int-val _.0)))
+    (((a b c _.0) _.1 (_.0 c . _.1))
+     (absento (closure _.0) (closure _.1)
+              (int-val _.0) (int-val _.1)))
+    (((a b c _.0 _.1) _.2 (_.0 _.1 c . _.2))
+     (absento (closure _.0) (closure _.1) (closure _.2)
+              (int-val _.0) (int-val _.1) (int-val _.2)))))
+
+
+
+(test "append-underspecified-1"
   (run 1 (append-body)
     (fresh (?)
       (eigen (a b c d e)
@@ -260,7 +360,7 @@
   '((lambda (l s)
       (if (null? l) s (cons (car l) (append (cdr l) s))))))
 
-(test "append-6b"
+(test "append-underspecified-2"
   (run 1 (append-body)
     (fresh (?)
       (eigen (a b c d e)
@@ -276,10 +376,13 @@
   '((lambda (l s)
       (if (null? l) s (cons (car l) (append (cdr l) s))))))
 
+
+(printf "The test 'append-underspecified-3' is expected to fail!\n")
+
 ;; this failing test shows why we should ideally find the smallest
 ;; program that satisfies the example, rather than letting miniKanre
 ;; do the least amount of work to find a solution.
-(test "append-6c"
+(test "append-underspecified-3"
   (run 1 (append-body)
     (fresh (?)
       (eigen (a b c d e)
@@ -303,14 +406,6 @@
 ;;        s
 ;;        (cons (car l) (list (car (cdr l)) (car s))))))
 
-
-(test "quines-1"
-  (run 5 (q) (evalo q q))
-  '(#t
-    #f
-    (((lambda (_.0) (list _.0 (list 'quote _.0))) '(lambda (_.0) (list _.0 (list 'quote _.0)))) (=/= ((_.0 closure)) ((_.0 int-val)) ((_.0 list)) ((_.0 quote))) (sym _.0))
-    (((lambda (_.0) (list (car _.0) (list 'quote _.0))) '((lambda (_.0) (list (car _.0) (list 'quote _.0))) . _.1)) (=/= ((_.0 car)) ((_.0 closure)) ((_.0 int-val)) ((_.0 list)) ((_.0 quote))) (sym _.0) (absento (closure _.1) (int-val _.1)))
-    (((lambda (_.0) (list _.0 (list (car '(quote . _.1)) _.0))) '(lambda (_.0) (list _.0 (list (car '(quote . _.1)) _.0)))) (=/= ((_.0 car)) ((_.0 closure)) ((_.0 int-val)) ((_.0 list)) ((_.0 quote))) (sym _.0) (absento (closure _.1) (int-val _.1)))))
 
 
 #!eof
