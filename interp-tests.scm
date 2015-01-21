@@ -40,6 +40,70 @@
     (((lambda (_.0) (list (car _.0) (list 'quote _.0))) '((lambda (_.0) (list (car _.0) (list 'quote _.0))) . _.1)) (=/= ((_.0 car)) ((_.0 closure)) ((_.0 int-val)) ((_.0 list)) ((_.0 quote))) (sym _.0) (absento (closure _.1) (int-val _.1)))
     (((lambda (_.0) (list _.0 (list (car '(quote . _.1)) _.0))) '(lambda (_.0) (list _.0 (list (car '(quote . _.1)) _.0)))) (=/= ((_.0 car)) ((_.0 closure)) ((_.0 int-val)) ((_.0 list)) ((_.0 quote))) (sym _.0) (absento (closure _.1) (int-val _.1)))))
 
+
+(test "I love you 20"
+  (run 20 (q)
+    (evalo
+     q
+     '(I love you)))
+  '('(I love you)
+    (list 'I 'love 'you)
+    ((car '((I love you) . _.0))
+     (absento (closure _.0) (int-val _.0)))
+    (cons 'I '(love you))
+    ((lambda () '(I love you)))
+    ((letrec ((_.0 (lambda (_.1 . _.2) _.3))) '(I love you))
+     (=/= ((_.0 quote))))
+    ((cdr '(_.0 I love you))
+     (absento (closure _.0) (int-val _.0)))
+    ((letrec ((_.0 (lambda (_.1 . _.2) _.3))
+              (_.4 _.5))
+       '(I love you))
+     (=/= ((_.0 quote)) ((_.4 quote))))
+    ((list (car '(I . _.0)) 'love 'you)
+     (absento (closure _.0) (int-val _.0)))
+    ((list 'I 'love (car '(you . _.0)))
+     (absento (closure _.0) (int-val _.0)))
+    ((letrec ((_.0 (lambda (_.1 . _.2) _.3))
+              (_.4 _.5)
+              (_.6 _.7))
+       '(I love you))
+     (=/= ((_.0 quote)) ((_.4 quote)) ((_.6 quote))))
+    (car (list '(I love you)))
+    ((list 'I (car '(love . _.0)) 'you)
+     (absento (closure _.0) (int-val _.0)))
+    (((lambda (_.0) _.0) '(I love you)) (sym _.0))
+    ((letrec ((_.0 (lambda (_.1 . _.2) _.3))
+              (_.4 _.5)
+              (_.6 _.7)
+              (_.8 _.9))
+       '(I love you))
+     (=/= ((_.0 quote)) ((_.4 quote)) ((_.6 quote))
+          ((_.8 quote))))
+    ((letrec ((_.0 (lambda (_.1 . _.2) _.3))
+              (_.4 _.5)
+              (_.6 _.7)
+              (_.8 _.9)
+              (_.10 _.11))
+       '(I love you))
+     (=/= ((_.0 quote)) ((_.10 quote)) ((_.4 quote))
+          ((_.6 quote)) ((_.8 quote))))
+    ((list 'I 'love (cdr '(_.0 . you)))
+     (absento (closure _.0) (int-val _.0)))
+    (((lambda (_.0) '(I love you)) '_.1) (=/= ((_.0 quote)))
+     (absento (closure _.1) (int-val _.1)))
+    ((list (cdr '(_.0 . I)) 'love 'you)
+     (absento (closure _.0) (int-val _.0)))
+    (list 'I 'love ((lambda () 'you)))))
+
+(test "I love you 99"
+  (length (run 99 (q)
+            (evalo
+             q
+             '(I love you))))
+  99)
+
+
 (test "append-1"
   (run* (q)
     (evalo
