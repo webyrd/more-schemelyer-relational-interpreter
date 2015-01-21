@@ -392,6 +392,12 @@
 ;; generate & test).  Is there a better way to restrict the desired
 ;; language for any given subexpression?  That would be extremely
 ;; useful.
+;;
+;; Maybe the fixpoint trick Oleg used for his relational type
+;; inferencer would work.
+;;
+;; In any case, would like refutational completeness, and want to get
+;; real pruning for performance, rather than generate & test.
 (test "generate tree accessor sequence 3 working fast"
   (run 1 (q)
     (accessoro q 'x)
@@ -404,7 +410,121 @@
     (evalo q 7))
   '((car (car (cdr '(8 (7) 9))))))
 
+(test "generate tree accessor sequence 4 working fast"
+  (run 1 (q)
+    (accessoro q 'x)
+    (evalo `((lambda (x) ,q) (quote (8 ((6 (((((7))))))) 9))) 7))
+  '((car (car (car (car (car (car (cdr (car (car (cdr x))))))))))))
 
+
+(test "generate tree accessor sequence 3 working, enforce no lambda in 'q'"
+  ;; the (absento 'lambda q) speeds up the search significantly
+  (run 1 (q)
+    (absento 7 q)
+    (absento 'lambda q)
+    (evalo `((lambda (x) ,q) (quote (8 (7) 9))) 7))
+  '((car (car (cdr x)))))
+
+(test "generate tree accessor sequence 3 working, 3 absentos"
+  (run 1 (q)
+    (absento 7 q)
+    (absento 'lambda q)
+    (absento 'cons q)
+    (evalo `((lambda (x) ,q) (quote (8 (7) 9))) 7))
+  '((car (car (cdr x)))))
+
+(test "generate tree accessor sequence 3 working, 4 absentos"
+  (run 1 (q)
+    (absento 7 q)
+    (absento 'lambda q)
+    (absento 'cons q)
+    (absento 'if q)
+    (evalo `((lambda (x) ,q) (quote (8 (7) 9))) 7))
+  '((car (car (cdr x)))))
+
+(test "generate tree accessor sequence 3 working, 5 absentos"
+  (run 1 (q)
+    (absento 7 q)
+    (absento 'lambda q)
+    (absento 'cons q)
+    (absento 'if q)
+    (absento 'null? q)
+    (evalo `((lambda (x) ,q) (quote (8 (7) 9))) 7))
+  '((car (car (cdr x)))))
+
+(test "generate tree accessor sequence 3 working, 6 absentos"
+  ;; seems like we're starting to get a little slower at this point
+  (run 1 (q)
+    (absento 7 q)
+    (absento 'lambda q)
+    (absento 'cons q)
+    (absento 'if q)
+    (absento 'null? q)
+    (absento 'letrec q)
+    (evalo `((lambda (x) ,q) (quote (8 (7) 9))) 7))
+  '((car (car (cdr x)))))
+
+(test "generate tree accessor sequence 3 working, 6 absentos  b"
+  ;; run 3 gives us a funny answer!
+  (run 3 (q)
+    (absento 7 q)
+    (absento 'lambda q)
+    (absento 'cons q)
+    (absento 'if q)
+    (absento 'null? q)
+    (absento 'letrec q)
+    (evalo `((lambda (x) ,q) (quote (8 (7) 9))) 7))
+  '((car (car (cdr x)))
+    (car (list (car (car (cdr x)))))
+    (car (list (car (car (cdr x))) x))))
+
+(test "generate tree accessor sequence 3 working, 9 absentos"
+  ;; fastest yet, but still not refutationally complete
+  (run 1 (q)
+    (absento 7 q)
+    (absento 'lambda q)
+    (absento 'cons q)
+    (absento 'if q)
+    (absento 'null? q)
+    (absento 'letrec q)
+    (absento 'list q)
+    (absento 'quote q)
+    (absento 'not q)
+    (evalo `((lambda (x) ,q) (quote (8 (7) 9))) 7))
+  '((car (car (cdr x)))))
+
+#|
+(test "generate tree accessor sequence 4 working, 9 absentos"
+  ;; still too sloooow.  I guess there isn't much pruning, if any?
+  (run 1 (q)
+    (absento 7 q)
+    (absento 'lambda q)
+    (absento 'cons q)
+    (absento 'if q)
+    (absento 'null? q)
+    (absento 'letrec q)
+    (absento 'list q)
+    (absento 'quote q)
+    (absento 'not q)
+    (evalo `((lambda (x) ,q) (quote (8 ((6 (((((7))))))) 9))) 7))
+  '((car (car (car (car (car (car (cdr (car (car (cdr x))))))))))))
+|#
+
+(test "generate tree accessor sequence 5 working, 9 absentos"
+  ;; we can access two distinct 7's in this example
+  (run 2 (q)
+    (absento 7 q)
+    (absento 'lambda q)
+    (absento 'cons q)
+    (absento 'if q)
+    (absento 'null? q)
+    (absento 'letrec q)
+    (absento 'list q)
+    (absento 'quote q)
+    (absento 'not q)
+    (evalo `((lambda (x) ,q) (quote (8 (7) 9 7))) 7))
+  '((car (car (cdr x)))
+    (car (cdr (cdr (cdr x))))))
 
 ;; (test "1"
 ;;   (run* (q) (eval-expo '#f '() q))
