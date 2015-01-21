@@ -104,6 +104,15 @@
   99)
 
 
+
+;; =========================================================================================
+
+;; Michael Ballantyne suggested using the relational interpreter to run 'append' backwards.
+
+;; -----------------------------------------------
+
+;; Running forwards (boring!).  Works as expected.  Note the
+;; refutational completeness implied by the run*.
 (test "append-1"
   (run* (q)
     (evalo
@@ -115,6 +124,13 @@
         (append '(a b c) '(d e)))
      q))
   '((a b c d e)))
+
+;; -----------------------------------------------
+
+;; Running "backwards", with the second 'argument' to append
+;; completely fresh.
+
+;; I *love* this test!!  Look at the answers!
 
 (test "append-2"
   (run 3 (q)
@@ -131,6 +147,26 @@
     ((letrec ((_.0 (lambda (_.1 . _.2) _.3))) '(d e))
      (=/= ((_.0 quote))))))
 
+;; We might expand run* to produce only a single answer, (d e).  However,
+;; run* diverges!  This is the "good" type of divergence, in which run*
+;; produces infinitely many answers, as opposed to looping forever while
+;; looking for a non-existent answer.
+
+;; Each answer produced is an *expression* that *evaluates* to the
+;; list (d e)!  I find this brilliant, and unexpected.  In fact, I
+;; initially thought there was an error in the code when run* diverged,
+;; and when I first examined the answers produces.  Rather, miniKanren
+;; outsmarted me as usual.
+
+;; -----------------------------------------------
+
+;; We can modify the query in 'append-2' by replacing ,q with (quote ,q).
+;; This lets us recapture the standard behavior of the 'appendo' relation.
+;;
+;; So, running 'append' in the relational Scheme interpreter is
+;; strictly more general than the miniKanren 'appendo' relation (or
+;; the standard Prolog 'append' predicate).
+
 (test "append-3"
   (run* (q)
     (evalo
@@ -143,6 +179,11 @@
      '(a b c d e)))
   '((d e)))
 
+;; -----------------------------------------------
+
+;; Here we leave the first argument to 'append' partially instantiated,
+;; and make the second argument ground.
+
 (test "append-4"
   (run* (q)
     (evalo
@@ -154,6 +195,10 @@
         (append (quote ,q) '(d e)))
      '(a b c d e)))
   '((a b c)))
+
+;; -----------------------------------------------
+
+;; Running "backwards", restricting the "input" values by wrapping the variables in quote forms.
 
 (test "append-5"
   (run* (l s)
@@ -170,6 +215,10 @@
     ((a b c) (d e))
     ((a b c d) (e))
     ((a b c d e) ())))
+
+;; -----------------------------------------------
+
+;; both inputs and the output are all partially instantiated
 
 (test "append-6"
   (run 6 (x y z)
@@ -194,6 +243,10 @@
     (((a b c _.0 _.1) _.2 (_.0 _.1 . _.2))
      (absento (closure _.0) (closure _.1) (closure _.2)
               (int-val _.0) (int-val _.1) (int-val _.2)))))
+
+;; -----------------------------------------------
+
+;; Another example with all inputs/output partially instantiated
 
 (test "append-7"
   (run 6 (x y z)
@@ -221,6 +274,10 @@
               (closure _.3) (int-val _.0) (int-val _.1)
               (int-val _.2) (int-val _.3)))))
 
+;; -----------------------------------------------
+
+;; Showing refutational completeness...
+
 (test "append-8"
   (run* (x y z)
     (evalo
@@ -231,6 +288,11 @@
         (append (quote (e . ,x)) (quote ,y)))
      `(a b c . ,z)))
   '())
+
+;; -----------------------------------------------
+
+;; Once again, the inputs and outputs are partially instantiated.  In
+;; this case there are infinitely many answers.
 
 (test "append-9"
   (run 4 (x y z)
@@ -252,6 +314,7 @@
      (absento (closure _.0) (closure _.1) (closure _.2)
               (int-val _.0) (int-val _.1) (int-val _.2)))))
 
+;; -----------------------------------------------
 
 
 (test "append-underspecified-1"
