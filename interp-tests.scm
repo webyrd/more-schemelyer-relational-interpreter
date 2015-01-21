@@ -358,6 +358,51 @@
     (evalo `((lambda (x) ,q) (quote (8 (7) 9))) 7))
   '((car (car (cdr x)))))
 
+;; Here's one way to specify that we only want car & cdr
+(define accessoro
+  (lambda (t x)
+    (conde
+      ((== `(car ,x) t))
+      ((== `(cdr ,x) t))
+      ((fresh (c?r t1)
+         (== `(,c?r ,t1) t)
+         (conde
+           ((== 'car c?r))
+           ((== 'cdr c?r)))
+         (accessoro t1 x))))))
+
+(test "accessoro-1"
+  (run 10 (q x)
+    (accessoro q x))
+  '(((car _.0) _.0)
+    ((cdr _.0) _.0)
+    ((car (car _.0)) _.0)
+    ((cdr (car _.0)) _.0)
+    ((car (cdr _.0)) _.0)
+    ((cdr (cdr _.0)) _.0)
+    ((car (car (car _.0))) _.0)
+    ((cdr (car (car _.0))) _.0)
+    ((car (cdr (car _.0))) _.0)
+    ((cdr (cdr (car _.0))) _.0)))
+
+
+;; While the following two tests are much faster than 'generate tree
+;; accessor sequence 3 working', they require a helper function *and*
+;; the queries are still not refutationally complete (since they are
+;; generate & test).  Is there a better way to restrict the desired
+;; language for any given subexpression?  That would be extremely
+;; useful.
+(test "generate tree accessor sequence 3 working fast"
+  (run 1 (q)
+    (accessoro q 'x)
+    (evalo `((lambda (x) ,q) (quote (8 (7) 9))) 7))
+  '((car (car (cdr x)))))
+
+(test "generate tree accessor sequence 3 working fast no lambda"
+  (run 1 (q)
+    (accessoro q '(quote (8 (7) 9)))
+    (evalo q 7))
+  '((car (car (cdr '(8 (7) 9))))))
 
 
 
