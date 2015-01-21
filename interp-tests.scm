@@ -526,6 +526,15 @@
   '((car (car (cdr x)))
     (car (cdr (cdr (cdr x))))))
 
+(test "generate tree from accessor 1"
+  ;; 
+  (run* (q)
+    (evalo `((lambda (x) (car (car (cdr x)))) (quote ,q)) 7))
+  '(((_.0 (7 . _.1) . _.2)
+     (absento (closure _.0) (closure _.1) (closure _.2)
+              (int-val _.0) (int-val _.1) (int-val _.2)))))
+
+
 ;; (test "1"
 ;;   (run* (q) (eval-expo '#f '() q))
 ;;   '(#f))
