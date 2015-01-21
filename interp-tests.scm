@@ -324,6 +324,41 @@
 
 
 
+;; generate car/cdr sequences to find the element in a tree
+
+(test "generate tree accessor sequence 1"
+  (run 1 (q)
+    (absento 8 q)
+    (evalo `((lambda (x) ,q) (quote (8))) 8))
+  '((car x)))
+
+(test "generate tree accessor sequence 2"
+  (run 1 (q) 
+    (absento 8 q)
+    (evalo `((lambda (x) ,q) (quote (7 8))) 8))
+  '((car (cdr x))))
+
+(test "generate tree accessor sequence 3 broken"
+  ;; without the absento to keep miniKanren honest, miniKanren will cheat!
+  (run 1 (q)
+    (evalo `((lambda (x) ,q) (quote (8 (7) 9))) 7))
+  '((quote 7)))
+
+(test "generate tree accessor sequence 3 working"
+  ;; the absento ensures mk will be honest
+  ;;
+  ;; however, we would ideally like q only to contain calls to car and
+  ;; cdr, and probably not include letrec etc.  How to best specify
+  ;; this, which could also greatly limit the branching factor and
+  ;; speed up the search?  Can we specify which parts of the language
+  ;; are fair game for any given subexpression somehow?  Maybe through
+  ;; environment games?
+  (run 1 (q)
+    (absento 7 q)
+    (evalo `((lambda (x) ,q) (quote (8 (7) 9))) 7))
+  '((car (car (cdr x)))))
+
+
 
 
 ;; (test "1"
