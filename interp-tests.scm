@@ -534,6 +534,19 @@
      (absento (closure _.0) (closure _.1) (closure _.2)
               (int-val _.0) (int-val _.1) (int-val _.2)))))
 
+#|
+;; could potentially run an interpreter inside the interpreter to generate the car/cdr pattern.
+;; maybe something like:
+(letrec ((f (lambda (x ls)
+              (if (null? ls)
+                  x
+                  (if (equal? (car ls) (quote car))
+                      (f (car x) (cdr ls))
+                      (if (equal? (car ls) (quote cdr))
+                          (f (cdr x) (cdr ls))
+                          (quote error)))))))
+  (f (quote (4 5 6)) (quote (cdr car))))
+|#
 
 ;; (test "1"
 ;;   (run* (q) (eval-expo '#f '() q))
