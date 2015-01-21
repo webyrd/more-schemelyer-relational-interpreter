@@ -332,6 +332,28 @@
     (evalo `((lambda (x) ,q) (quote (8))) 8))
   '((car x)))
 
+(test "generate tree accessor sequence 1 b"
+  (run 10 (q)
+    (absento 8 q)
+    (evalo `((lambda (x) ,q) (quote (8))) 8))
+  '((car x)
+    ((lambda () (car x)))
+    (car (list (car x)))
+    (car (list (car x) x))
+    ((car (letrec ((_.0 (lambda (_.1 . _.2) _.3))) x))
+     (=/= ((_.0 x)))
+     (absento (8 _.0) (8 _.1) (8 _.2) (8 _.3)))
+    ((car (list (car x) '_.0))
+     (absento (8 _.0) (closure _.0) (int-val _.0)))
+    (car (list (car x) x x))
+    (car ((lambda () x)))
+    ((car (list (car x) (lambda _.0 _.1)))
+     (absento (8 _.0) (8 _.1) (closure _.0) (closure _.1)
+              (int-val _.0) (int-val _.1)))
+    ((car (letrec ((_.0 (lambda (_.1 . _.2) _.3)) (_.4 _.5)) x))
+     (=/= ((_.0 x)) ((_.4 x)))
+     (absento (8 _.0) (8 _.1) (8 _.2) (8 _.3) (8 _.4) (8 _.5)))))
+
 (test "generate tree accessor sequence 2"
   (run 1 (q) 
     (absento 8 q)
